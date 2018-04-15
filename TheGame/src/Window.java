@@ -5,7 +5,7 @@ import javax.swing.JFrame;
 public class Window {
 
 	public Window(int width, int height, String title, Game game) { // main window screen.
-		JFrame frame = new JFrame(title);
+		JFrame frame = new JFrame("The Game");
 		frame.setPreferredSize(new Dimension(width, height));
 		frame.setMaximumSize(new Dimension(width, height));
 		frame.setMinimumSize(new Dimension(width, height));

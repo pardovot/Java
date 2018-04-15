@@ -2,7 +2,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import java.awt.Font;
 
 /*
@@ -14,13 +13,15 @@ public class Menu extends MouseAdapter {
 	private Handler handler;
 	private Player player;
 	private basicEnemy basicEnemy;
+	private FollowingEnemy followingEnemy;
 	private HUD hud = new HUD();
 
-	public Menu(Game game, Handler handler, Player player, basicEnemy basicEnemy) {
+	public Menu(Game game, Handler handler, Player player, basicEnemy basicEnemy, FollowingEnemy followingEnemy) {
 		this.game = game;
 		this.handler = handler;
 		this.player = player;
 		this.basicEnemy = basicEnemy;
+		this.followingEnemy = followingEnemy;
 	}
 
 	public void mousePressed(MouseEvent e) {
@@ -108,11 +109,10 @@ public class Menu extends MouseAdapter {
 
 	public void run() { // run method, sets the default values to start a game, and initialize objects.
 		game.gameState = STATE.Game;
-		game.setRunning(true);
 		hud.resetGame();
 		handler.addObject(player);
 		handler.addObject(basicEnemy);
-		handler.addObject(new FollowingEnemy(player));
+		handler.addObject(followingEnemy);
 		game.setCurrentTime(System.currentTimeMillis());
 		game.setExpectedTime(game.getCurrentTime() + game.getTime() * 1000);
 	}

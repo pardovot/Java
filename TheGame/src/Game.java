@@ -2,6 +2,9 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferStrategy;
 
 public class Game extends Canvas implements Runnable {
@@ -16,24 +19,28 @@ public class Game extends Canvas implements Runnable {
 	private FollowingEnemy followingEnemy = new FollowingEnemy(player);
 	private HUD hud = new HUD();
 	public STATE gameState = STATE.Menu;
-	private GameOver gameOver = new GameOver(hud);
 	private long currentTime;
 	private long expectedTime;
 	private int time;
 	public boolean paused = false;
-	private Menu menu = new Menu(this, handler, player, basicEnemy);
+	private Menu menu;
+	private KeyInput keyInput;
+	private Shape circle;
+	private Rectangle playerRect = new Rectangle((int) player.getX(), (int) player.getY(), 32, 32);
 
 	// main game constructor.
 	public Game() {
 		Audio.loadSounds();
 		Audio.getMusic("music").loop();
 		handler = new Handler();
-		this.addKeyListener(new KeyInput(handler, this, player, basicEnemy, followingEnemy));
-		Menu menu = new Menu(this, handler, player, basicEnemy);
+		keyInput = new KeyInput(handler, this, player, basicEnemy, followingEnemy);
+		this.addKeyListener(keyInput);
+		menu = new Menu(this, handler, player, basicEnemy, followingEnemy);
 		this.addMouseListener(menu);
 		new Window(WIDTH, HEIGHT, "My Game", this);
 
 	}
+
 	// main run method.
 	public void run() {
 		this.requestFocus();
@@ -44,26 +51,26 @@ public class Game extends Canvas implements Runnable {
 		double delta = 0;
 		long timer = System.currentTimeMillis();
 		int frames = 0;
-		time = 5;
+		time = 0; // time(in seconds) before new enemy appears.
 		currentTime = System.currentTimeMillis();
 		expectedTime = currentTime + time * 1000;
-		int scoreToLevelUp = 1500;
+		int scoreToLevelUp = 1500; // first score to level, increases by 2250 every level.
 		int scoreToLevelTemp = scoreToLevelUp;
 		boolean resetPosition = false;
 		boolean playLevelUp = true;
 		while (isRunning) {
 			if (gameState == STATE.Game && !paused) { // main running game loop.
+				allObjectsLoop();
 				deathTest(time);
 				resetPosition = false;
-				addRandomObjects();
 				currentTime = System.currentTimeMillis();
 				expectedTime = addEnemyEveryXTime(currentTime, expectedTime, time);
-				scoreToLevelUp = levelUpTest(scoreToLevelUp, scoreToLevelTemp, resetPosition, isWinning, time, currentTime, expectedTime);
+				scoreToLevelUp = levelUpTest(scoreToLevelUp, scoreToLevelTemp, resetPosition, isWinning, time,
+						currentTime, expectedTime);
 				isWinning = testWinning(isWinning);
-				objectsLoop();
 				playLevelUp = true;
 			}
-			if (paused) { // change time values.
+			if (paused || gameState != STATE.Game) { // keeps time updated while game is not running
 				currentTime = System.currentTimeMillis();
 				expectedTime = currentTime + (time * 1000);
 			}
@@ -80,6 +87,7 @@ public class Game extends Canvas implements Runnable {
 				Audio.getSound("Winning").play();
 				handler.object.clear();
 				handler.removeAllObjects();
+				handler.extraObjects.clear();
 				HUD.setHealth(100);
 				resetPlayerPosition(true);
 				scoreToLevelUp = scoreToLevelTemp;
@@ -111,6 +119,7 @@ public class Game extends Canvas implements Runnable {
 			if (gameState != STATE.LevelUp) {
 				handler.tick();
 				if (gameState == STATE.Game) {
+					playerRect = new Rectangle((int) player.getX(), (int) player.getY(), 32, 32);
 					hud.tick();
 				}
 			}
@@ -133,8 +142,6 @@ public class Game extends Canvas implements Runnable {
 		} else if (gameState == STATE.Menu || gameState == STATE.Help || gameState == STATE.GameOver
 				|| gameState == STATE.LevelUp || gameState == STATE.Winning) {
 			menu.render(g);
-		} else if (gameState == STATE.GameOver) {
-			gameOver.render(g);
 		}
 		if (paused) {
 			Font font = new Font("pause", 1, 70);
@@ -155,7 +162,7 @@ public class Game extends Canvas implements Runnable {
 	public void stop() { // stops game.
 		try {
 			thread.join();
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		System.exit(1);
@@ -173,23 +180,8 @@ public class Game extends Canvas implements Runnable {
 
 	}
 
-	public void addRandomObjects() { // adds random score/health object.
-		int randomNumber = (int) (Math.random() * 20000 + 1);
-		if (randomNumber == 20000) {
-			GoldenScore goldenScore = new GoldenScore();
-			handler.addObject(goldenScore);
-			Audio.getSound("addRandomItem").play();
-		}
-		randomNumber = (int) (Math.random() * 50000 + 1);
-		if (randomNumber == 50000) {
-			AddLife addLife = new AddLife();
-			handler.addObject(addLife);
-			Audio.getSound("addRandomItem").play();
-		}
-	}
-
 	public void deathTest(int time) { // tests if player is dead.
-		if (HUD.getHealth() == 0) {
+		if (HUD.getHealth() <= 0) {
 			gameState = STATE.GameOver;
 			handler.object.clear();
 			handler.removeAllObjects();
@@ -206,8 +198,8 @@ public class Game extends Canvas implements Runnable {
 		return scoreToLevel = 200;
 	}
 
-	public int levelUpTest(int scoreToLevelUp, int scoreToLevelTemp, boolean resetPosition, boolean isWinning, int time, long currentTime,
-			long expectedTime) { // if desired score is reached, level up.
+	public int levelUpTest(int scoreToLevelUp, int scoreToLevelTemp, boolean resetPosition, boolean isWinning, int time,
+			long currentTime, long expectedTime) { // if desired score is reached, level up.
 		if (hud.getScore() >= scoreToLevelUp) {
 			hud.LevelUp();
 			scoreToLevelUp += (int) scoreToLevelTemp * 1.5;
@@ -234,70 +226,130 @@ public class Game extends Canvas implements Runnable {
 		return isWinning;
 	}
 
-	public long addEnemyEveryXTime(long currentTime, long expectedTime, int time) { // adds enemy to the game every 'X' seconds. Subtracts by 1 every stage.
+	public long addEnemyEveryXTime(long currentTime, long expectedTime, int time) {
+		// adds enemy to the game every 'X' seconds. Subtracts by 1 second every stage.
 		if (expectedTime - currentTime <= 10) {
 			basicEnemy basicEnemy = new basicEnemy();
 			handler.addObject(basicEnemy);
 			expectedTime += time * 1000;
+			System.out.println("added");
 		}
 		return expectedTime;
 	}
 
-	public void objectsLoop() { // main objects loop testing for collision between player and other objects. Also adding trails effect to enemies.
-		try {
-			for (int i = 0; i < handler.object.size(); i++) {
-				handler.object.get(i).getX();
-				int x = (int) (handler.object.get(i).getX() - player.getX());
-				int y = (int) (handler.object.get(i).getY() - player.getY());
-				if (handler.object.get(i).getId() == ID.basicEnemy) {
-					if (x < 32 && x > -16 && y < 32 && y > -16) {
-						HUD.setHealth((float) (HUD.getHealth() - 0.001));
-					}
-					BasicTrail basicTrail = new BasicTrail(handler.object.get(i).getX(), handler.object.get(i).getY(),
-							Color.red, handler);
-					handler.addObject(basicTrail);
+	public void allObjectsLoop() {
+		// main objects loop, avoids enemies, collects life and score objects,
+		// reduces hp to player on touch
+		GameObject nextObject = null;
+		GameObject closestObject = null;
+		GameObject tempObject = null;
+		float x, y, x1, y1;
+		for (int i = 0; i < handler.extraObjects.size() - 1; i++) {
+			// determine which life/score object is the closest
+			nextObject = handler.extraObjects.get(i + 1);
+			tempObject = handler.extraObjects.get(i);
+			if (tempObject.getId() == ID.GoldenScore || tempObject.getId() == ID.AddLife) {
+				if (player.getX() > nextObject.getX()) {
+					x = player.getX();
+					x1 = nextObject.getX();
+				} else {
+					x = nextObject.getX();
+					x1 = player.getX();
 				}
-				try {
-					if (handler.object.get(i).getId() == ID.FollowingEnemy) {
-						if (x < 32 && x > -16 && y < 32 && y > -16) {
-							HUD.setHealth((float) (HUD.getHealth() - 0.001));
-						}
-						BasicTrail basicTrail = new BasicTrail(handler.object.get(i).getX(),
-								handler.object.get(i).getY(), Color.blue, handler);
-						handler.addObject(basicTrail);
-					}
-				} catch (NullPointerException e) {
+				if (player.getY() > nextObject.getY()) {
+					y = player.getY();
+					y1 = nextObject.getY();
+				} else {
+					y = nextObject.getY();
+					y1 = player.getY();
 				}
-				try {
-					if (handler.object.get(i).getId() == ID.GoldenScore) {
-						if (x < 32 && x > -16 && y < 32 && y > -16) {
-							handler.object.remove(i);
-							hud.goldenScore();
-							Audio.getSound("takeItem").play();
-						}
-					}
-				} catch (NullPointerException e) {
-				}
-				try {
-					if (x < 32 && x > -16 && y < 32 && y > -16) {
-						if (handler.object.get(i).getId() == ID.AddLife) {
-							handler.object.remove(i);
-							if (HUD.getHealth() + 30 > 100) {
-								HUD.setHealth(100);
-							} else {
-								hud.addLife();
-							}
-							Audio.getSound("takeItem").play();
-						}
-					}
-				} catch (NullPointerException e) {
+				if (x < x1 || y < y1) {
+					closestObject = nextObject;
+				} else {
+					closestObject = tempObject;
 				}
 			}
-		} catch (NullPointerException e) {
+		}
+		if (handler.extraObjects.size() == 1) { // if there's only 1 object, locks on it.
+			closestObject = tempObject;
+		}
+		boolean isIntersects = false;
+		circle = new Ellipse2D.Double((int) player.getX() - 48, (int) player.getY() - 48, 130, 130);
+		for (int i = 0; i < handler.object.size(); i++) {
+			// main auto movement loop, iterates through each object, and if detect
+			// collision, moves away.
+			isIntersects = false;
+			tempObject = handler.object.get(i);
+			if (tempObject.getId() == ID.basicEnemy || tempObject.getId() == ID.FollowingEnemy) {
+				if (playerRect.intersects(tempObject.getBounds())) {
+					HUD.setHealth((float) (HUD.getHealth() - 0.001));
+					isIntersects = true;
+				}
+				if (circle.intersects(tempObject.getBounds())) {
+					isIntersects = true;
+					float diffX = (tempObject.getX() - player.getX() - 8);
+					float diffY = (tempObject.getY() - player.getY() - 8);
+					float distance = (float) Math
+							.sqrt((tempObject.getX() - player.getX()) * (tempObject.getX() - player.getX())
+									+ ((tempObject.getY() - player.getY()) * (tempObject.getY() - player.getY())));
+					player.setVelX((-1 / distance) * diffX * 10);
+					player.setVelY((-1 / distance) * diffY * 10);
+				}
+			} else if (closestObject != null && !isIntersects) {
+				float diffX = player.getX() - closestObject.getX();
+				float diffY = player.getY() - closestObject.getY();
+				float distance = (float) Math
+						.sqrt((player.getX() - closestObject.getX()) * (player.getX() - closestObject.getX())
+								+ ((player.getY() - closestObject.getY()) * (player.getY() - closestObject.getY())));
+
+				player.setVelX((-1 / distance) * diffX * 30);
+				player.setVelY((-1 / distance) * diffY * 30);
+
+			} else if (player.getX() != WIDTH / 2 - 32 && player.getY() != HEIGHT / 2 - 32) {
+				float diffX = player.getX() - 378;
+				float diffY = player.getY() - 278;
+				float distance = (float) Math.sqrt((player.getX() - 368) * (player.getX() - 368)
+						+ ((player.getY() - 268) * (player.getY() - 268)));
+
+				player.setVelX((-1 / distance) * diffX * 5);
+				player.setVelY((-1 / distance) * diffY * 5);
+			}
+		}
+		for (int i = 0; i < handler.extraObjects.size(); i++) {
+			// detects collision between player and life/score objects.
+			tempObject = handler.extraObjects.get(i);
+			if (tempObject.getId() == ID.GoldenScore) {
+				if (playerRect.intersects(tempObject.getBounds())) {
+					handler.extraObjects.remove(i);
+					hud.goldenScore();
+					Audio.getSound("takeItem").play();
+				}
+			}
+			if (tempObject.getId() == ID.AddLife) {
+				if (playerRect.intersects(tempObject.getBounds())) {
+					handler.extraObjects.remove(i);
+					hud.addLife();
+					Audio.getSound("takeItem").play();
+				}
+			}
+		}
+		// adds life/score object randomly.
+		int randomNumber = (int) (Math.random() * 100000 + 1);
+		if (randomNumber == 1000000) {
+			GoldenScore goldenScore = new GoldenScore();
+			handler.addExtraObject(goldenScore);
+			Audio.getSound("addRandomItem").play();
+		}
+		randomNumber = (int) (Math.random() * 130000 + 1);
+		if (randomNumber == 130000) {
+			AddLife addLife = new AddLife();
+			handler.addExtraObject(addLife);
+			Audio.getSound("addRandomItem").play();
 		}
 	}
 
-	public void resetPlayerPosition(boolean resetPosition) { // reset players position to center, removing all objects besides the player.
+	public void resetPlayerPosition(boolean resetPosition) { // reset players position to center, removing all objects
+																// besides the player.
 		if (resetPosition) {
 			player.setVelX(0);
 			player.setX(WIDTH / 2 - 32);
@@ -305,10 +357,6 @@ public class Game extends Canvas implements Runnable {
 			player.setY(HEIGHT / 2 - 32);
 			handler.removeAllObjects();
 		}
-	}
-
-	public void setRunning(boolean isRunning) {
-		this.isRunning = isRunning;
 	}
 
 	public long getCurrentTime() {
@@ -326,5 +374,5 @@ public class Game extends Canvas implements Runnable {
 	public int getTime() {
 		return time;
 	}
-	
+
 }

@@ -1,10 +1,11 @@
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 
 public class GoldenScore extends GameObject {
 	
 	public GoldenScore() {
-		super((int) (Math.random() * Game.WIDTH + 1), (int) (Math.random() * Game.HEIGHT + 1), ID.GoldenScore); // creates basic enemy at random X and random Y
+		super((int) (Math.random() * (Game.WIDTH-64) + 1), (int) (Math.random() * (Game.HEIGHT-64) + 1), ID.GoldenScore); // creates basic enemy at random X and random Y
 		velX = getNum((float) (Math.random() * 99) + 1); // get random value for velocity X;
 		velY = getNum((float) (Math.random() * 99) + 1); // get random value for velocity Y;
 	}
@@ -38,5 +39,8 @@ public class GoldenScore extends GameObject {
 			return -1;
 		}
 	}
-	
+
+	public Rectangle getBounds() {
+		return new Rectangle((int) x, (int) y, 16, 16);
+	}
 }

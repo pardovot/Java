@@ -1,4 +1,6 @@
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 
 /* 
  *  Main game object class.
@@ -10,6 +12,7 @@ public abstract class GameObject {
 	protected float x, y;
 	protected ID id;
 	protected float velX, velY;
+	protected Color color;
 	
 	public GameObject(float x, float y, ID id) {
 		setX(x);
@@ -17,6 +20,8 @@ public abstract class GameObject {
 		setId(id);
 	}
 	
+    public abstract Rectangle getBounds();
+
 	public abstract void tick();
 	
 	public abstract void render(Graphics g);
@@ -60,5 +65,4 @@ public abstract class GameObject {
 	public void setVelY(float velY) {
 		this.velY = velY;
 	}
-	
 }

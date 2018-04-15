@@ -16,7 +16,9 @@ public class HUD {
 		g.setColor(Color.gray);
 		g.fillRect(260, 15, 250, 32);
 		try {
-			Color color = new Color(255 - (int) (health * 2.55), (int) (health * 2.55), 0); // sets the color according to the health. (green to red).
+			Color color = new Color(255 - (int) (health * 2.55), (int) (health * 2.55), 0); // sets the color according
+																							// to the health. (green to
+																							// red).
 			g.setColor(color);
 		} catch (Exception e) {
 		}
@@ -45,7 +47,11 @@ public class HUD {
 	}
 
 	public void addLife() { // adds 20 health points when taking life.
-		HUD.health += 20;
+		if (HUD.health + 20 > 100) {
+			HUD.setHealth(100);
+		} else {
+			HUD.health += 20;
+		}
 	}
 
 	public static double getHealth() {

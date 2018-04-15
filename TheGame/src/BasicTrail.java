@@ -2,6 +2,13 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
+
+/*
+ * This class is not used in the BOT version game.
+ */
+
 
 public class BasicTrail extends GameObject{
 	
@@ -24,7 +31,7 @@ public class BasicTrail extends GameObject{
 
 	public void tick() { // trail updating method.
 		if(alpha > life) {
-			alpha -= life - 0.001f; // substruct alpha(trail) until life > alpa.
+			alpha -= life - 0.01f; // substract alpha(trail) until life > alpha.
 		} else {
 			handler.removeObject(this);
 		}
@@ -44,5 +51,10 @@ public class BasicTrail extends GameObject{
 	private AlphaComposite makeTransparent(float alpha) { 
 		int type = AlphaComposite.SRC_OVER;
 		return (AlphaComposite.getInstance(type, alpha)); // Creates an AlphaComposite object with the specified rule and the constant alpha to multiply with the alpha of the source.
+	}
+
+	@Override
+	public Rectangle getBounds() {
+		return null;
 	}
 }

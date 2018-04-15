@@ -1,8 +1,8 @@
 import java.util.HashMap;
 import java.util.Map;
 
-
 import org.newdawn.slick.Music;
+import org.newdawn.slick.SlickException;
 import org.newdawn.slick.Sound;
 
 public class Audio {
@@ -19,8 +19,8 @@ public class Audio {
 			soundMap.put("Winning", new Sound("resources/Winning.ogg"));
 			soundMap.put("takeItem", new Sound("resources/Take_Item.ogg"));
 			soundMap.put("addRandomItem", new Sound("resources/Click1.ogg"));
-			
-		} catch (Exception e) {
+		} catch (SlickException e) {
+			e.printStackTrace();
 		}
 	}
 

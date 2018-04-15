@@ -1,10 +1,11 @@
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 
 public class basicEnemy extends GameObject {
 	
 	public basicEnemy() {
-		super((int) (Math.random() * Game.WIDTH + 1), (int) (Math.random() * Game.HEIGHT + 1), ID.basicEnemy); // creates basic enemy at random X and random Y
+		super((int) (Math.random() * (Game.WIDTH-64) + 1), (int) (Math.random() * (Game.HEIGHT-64) + 1), ID.basicEnemy); // creates
 		velX = 5;
 		velY = 5;
 	}
@@ -31,12 +32,8 @@ public class basicEnemy extends GameObject {
 			velX *= -1;
 		}
 	}
-	
-	public float getNum(float num) { // return random value, 5 or -5 for the object.
-		if(num >= 50) {
-			return 5;
-		} else {
-			return -5;
-		}
+
+	public Rectangle getBounds() {
+		return new Rectangle((int) x, (int) y, 16, 16);
 	}
 }

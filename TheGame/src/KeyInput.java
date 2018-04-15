@@ -1,5 +1,8 @@
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+
 /*
  *  Main keyboard functions.
  */
@@ -11,7 +14,7 @@ public class KeyInput extends KeyAdapter {
 	private Player player;
 	private basicEnemy basicEnemy;
 	private FollowingEnemy followingEnemy;
-
+	
 	public KeyInput(Handler handler, Game game, Player player, basicEnemy basicEnemy,
 			FollowingEnemy followingEnemy) {
 		this.handler = handler;
@@ -52,13 +55,18 @@ public class KeyInput extends KeyAdapter {
 					game.paused = true;
 				}
 			}
+			if(key == KeyEvent.VK_E) {
+				System.out.println("asd");
+				handler.addObject(new basicEnemy());
+			}
 		}
-		if (game.gameState == STATE.Menu) { // starts the game if pressed 'space' on the menu.
+		if (game.gameState == STATE.Menu || game.gameState == STATE.GameOver) { // starts the game if pressed 'space' on the menu.
 			if (key == KeyEvent.VK_SPACE) {
 				game.gameState = STATE.Game;
 				hud.resetGame();
 				handler.addObject(player);
 				handler.addObject(basicEnemy);
+				handler.addObject(new BasicTrail(basicEnemy.getX(), basicEnemy.getY(), Color.RED, handler));
 				handler.addObject(new FollowingEnemy(player));
 			}
 		}
@@ -90,5 +98,9 @@ public class KeyInput extends KeyAdapter {
 			} catch (NullPointerException ex) {
 			}
 		}
+	}
+	
+	public void render(Graphics g) {
+
 	}
 }
