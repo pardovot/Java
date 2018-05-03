@@ -12,21 +12,21 @@ public class Menu extends MouseAdapter {
 	private Game game;
 	private Handler handler;
 	private Player player;
-	private basicEnemy basicEnemy;
-	private FollowingEnemy followingEnemy;
 	private HUD hud = new HUD();
 
-	public Menu(Game game, Handler handler, Player player, basicEnemy basicEnemy, FollowingEnemy followingEnemy) {
+	public Menu(Game game, Handler handler, Player player) {
 		this.game = game;
 		this.handler = handler;
 		this.player = player;
-		this.basicEnemy = basicEnemy;
-		this.followingEnemy = followingEnemy;
 	}
 
 	public void mousePressed(MouseEvent e) {
 		int mx = e.getX();
 		int my = e.getY();
+		
+		if(mouseHover(mx, my, 744, 9, 30, 31)) { // mute button.
+			Game.mute = !Game.mute;
+		}
 		
 		//menu screen.
 		if (game.gameState == STATE.Menu) {
@@ -105,14 +105,30 @@ public class Menu extends MouseAdapter {
 				System.exit(1);
 			}
 		}
+		
+		if (game.gameState == STATE.Game) {
+			// click to go to menu.
+			if (mouseHover(mx, my, 680, 17, 51, 15)) {
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
+				game.gameState = STATE.Menu;
+				handler.object.clear();
+				player.setX(Game.WIDTH / 2 - 32);
+				player.setY(Game.HEIGHT / 2 - 32);
+				player.setVelX(0);
+				player.setVelY(0);
+				game.paused = false;
+			}
+		}
 	}
 
 	public void run() { // run method, sets the default values to start a game, and initialize objects.
 		game.gameState = STATE.Game;
 		hud.resetGame();
 		handler.addObject(player);
-		handler.addObject(basicEnemy);
-		handler.addObject(followingEnemy);
+		handler.addObject(new basicEnemy());
+		handler.addObject(new FollowingEnemy(player));
 		game.setCurrentTime(System.currentTimeMillis());
 		game.setExpectedTime(game.getCurrentTime() + game.getTime() * 1000);
 	}
@@ -176,15 +192,20 @@ public class Menu extends MouseAdapter {
 			g.drawString("Press space to continue", 175, 350);
 
 		} else if (game.gameState == STATE.Help) { // help screen rendering.
-			Font font = new Font("Big", 1, 50);
+			Font font = new Font("Big", 1, 40);
 			g.setColor(Color.white);
 			g.setFont(font);
-			g.drawString("THRERE IS NO FUCKING HELP", 30, 200);
-			g.drawString("YOU FUCKING KNOOBH", 110, 300);
-			g.drawString("¯\\_(ツ)_/¯", 280, 400);
+			g.drawString("You are not playing in this version", 75, 200);
+			g.drawString("of the game", 285, 250);
+			g.drawString("There is a built-in code in this version", 45, 330);
+			g.drawString("that plays for you automatically", 105, 380);
 			Font font2 = new Font("small", 1, 30);
 			g.setFont(font2);
 			g.drawString("Back to menu", 10, 40);
+			Font font3 = new Font("HUGE", 1, 80);
+			g.setColor(Color.CYAN);
+			g.setFont(font3);
+			g.drawString("HAVE FUN! =]", 132, 480);
 		} else if (game.gameState == STATE.Winning) { // winning screen rendering.
 
 			Font font = new Font("Big", 1, 70);

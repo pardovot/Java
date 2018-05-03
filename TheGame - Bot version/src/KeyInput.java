@@ -46,6 +46,10 @@ public class KeyInput extends KeyAdapter {
 		if (key == KeyEvent.VK_ESCAPE) // exits game if esc is pressed.
 			System.exit(1);
 
+		if(key == KeyEvent.VK_M) {
+			Game.mute = !Game.mute;
+		}
+		
 		if (game.gameState == STATE.Game) { // pause/unpause function for the game.
 			if (key == KeyEvent.VK_P) {
 				if (game.paused) {

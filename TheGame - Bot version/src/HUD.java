@@ -25,9 +25,13 @@ public class HUD {
 		g.fillRect(260, 15, (int) (health * 2.5), 32);
 		g.setColor(Color.white);
 		g.drawRect(260, 15, 250, 32);
-		g.setFont(new Font("asd", Font.BOLD, 15));
+		Font font = new Font("asd", Font.BOLD, 15);
+		g.setFont(font);
 		g.drawString("Level: " + (int) level, 5, 15);
 		g.drawString("Score: " + (int) score, 5, 30);
+		Font font2 = new Font("menu", Font.BOLD, 19);
+		g.setFont(font2);
+		g.drawString("Menu", 680, 32);
 	}
 
 	public float getScore() {

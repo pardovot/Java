@@ -6,6 +6,11 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 public class Game extends Canvas implements Runnable {
 	private static final long serialVersionUID = -6112428091888191314L;
@@ -27,15 +32,30 @@ public class Game extends Canvas implements Runnable {
 	private KeyInput keyInput;
 	private Shape circle;
 	private Rectangle playerRect = new Rectangle((int) player.getX(), (int) player.getY(), 32, 32);
+	public static boolean mute = false;
+	private BufferedImage musicButton;
+	private BufferedImage muteButton;
+	private boolean playOnce = false;
 
 	// main game constructor.
 	public Game() {
 		Audio.loadSounds();
 		Audio.getMusic("music").loop();
+		try {
+			musicButton = ImageIO.read(new File("resources/musicButton.png")); // load player left sprite.
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			muteButton = ImageIO.read(new File("resources/muteButton.png")); // load player right
+			// sprite.
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		handler = new Handler();
 		keyInput = new KeyInput(handler, this, player, basicEnemy, followingEnemy);
 		this.addKeyListener(keyInput);
-		menu = new Menu(this, handler, player, basicEnemy, followingEnemy);
+		menu = new Menu(this, handler, player);
 		this.addMouseListener(menu);
 		new Window(WIDTH, HEIGHT, "My Game", this);
 
@@ -51,7 +71,7 @@ public class Game extends Canvas implements Runnable {
 		double delta = 0;
 		long timer = System.currentTimeMillis();
 		int frames = 0;
-		time = 0; // time(in seconds) before new enemy appears.
+		time = 5; // time(in seconds) before new enemy appears.
 		currentTime = System.currentTimeMillis();
 		expectedTime = currentTime + time * 1000;
 		int scoreToLevelUp = 1500; // first score to level, increases by 2250 every level.
@@ -59,7 +79,14 @@ public class Game extends Canvas implements Runnable {
 		boolean resetPosition = false;
 		boolean playLevelUp = true;
 		while (isRunning) { // main running game loop.
-			if (gameState == STATE.Game && !paused) { 
+			if (mute) {
+				Audio.getMusic("music").pause();
+				playOnce = true;
+			} else if (!mute && playOnce) {
+				Audio.getMusic("music").resume();
+				playOnce = false;
+			}
+			if (gameState == STATE.Game && !paused) {
 				allObjectsLoop();
 				deathTest(time);
 				resetPosition = false;
@@ -74,17 +101,19 @@ public class Game extends Canvas implements Runnable {
 				currentTime = System.currentTimeMillis();
 				expectedTime = currentTime + (time * 1000);
 			}
-			if (gameState == STATE.GameOver) { // play game over sound.
+			if (gameState == STATE.GameOver && !mute) { // play game over sound.
 				Audio.getSound("gameOver").play();
 			}
 			if (playLevelUp) {
-				if (gameState == STATE.LevelUp) { // play level up sound once.
+				if (gameState == STATE.LevelUp && !mute) { // play level up sound once.
 					Audio.getSound("levelUp").play();
 					playLevelUp = false;
 				}
 			}
 			if (gameState == STATE.Winning) { // game over - winning.
-				Audio.getSound("Winning").play();
+				if (!mute) {
+					Audio.getSound("Winning").play();
+				}
 				handler.object.clear();
 				handler.removeAllObjects();
 				handler.extraObjects.clear();
@@ -136,6 +165,11 @@ public class Game extends Canvas implements Runnable {
 		Graphics g = bs.getDrawGraphics();
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, WIDTH, HEIGHT);
+		if (!mute) {
+			g.drawImage(musicButton, 745, 10, null);
+		} else {
+			g.drawImage(muteButton, 745, 10, null);
+		}
 		if (gameState == STATE.Game) {
 			handler.render(g);
 			hud.render(g);
@@ -190,14 +224,6 @@ public class Game extends Canvas implements Runnable {
 		}
 	}
 
-//	public int resetGame(int scoreToLevel) { // resets all values for a new game.
-//		handler.object.clear();
-//		handler.removeAllObjects();
-//		HUD.setHealth(100);
-//		resetPlayerPosition(true);
-//		return scoreToLevel = 200;
-//	}
-
 	public int levelUpTest(int scoreToLevelUp, int scoreToLevelTemp, boolean resetPosition, boolean isWinning, int time,
 			long currentTime, long expectedTime) { // if desired score is reached, level up.
 		if (hud.getScore() >= scoreToLevelUp) {
@@ -232,7 +258,6 @@ public class Game extends Canvas implements Runnable {
 			basicEnemy basicEnemy = new basicEnemy();
 			handler.addObject(basicEnemy);
 			expectedTime += time * 1000;
-			System.out.println("added");
 		}
 		return expectedTime;
 	}
@@ -271,11 +296,12 @@ public class Game extends Canvas implements Runnable {
 			}
 		}
 		if (handler.extraObjects.size() == 1) { // if there's only 1 object, locks on it.
-			closestObject = tempObject;
+			closestObject = handler.extraObjects.get(0);
 		}
 		boolean isIntersects = false;
 		circle = new Ellipse2D.Double((int) player.getX() - 48, (int) player.getY() - 48, 130, 130);
 		for (int i = 0; i < handler.object.size(); i++) {
+			// System.out.println(closestObject + " " + isIntersects);
 			// main auto movement loop, iterates through each object, and if detect
 			// collision, moves away.
 			isIntersects = false;
@@ -322,29 +348,38 @@ public class Game extends Canvas implements Runnable {
 				if (playerRect.intersects(tempObject.getBounds())) {
 					handler.extraObjects.remove(i);
 					hud.goldenScore();
-					Audio.getSound("takeItem").play();
+					if (!mute) {
+						Audio.getSound("takeItem").play();
+					}
 				}
 			}
 			if (tempObject.getId() == ID.AddLife) {
 				if (playerRect.intersects(tempObject.getBounds())) {
 					handler.extraObjects.remove(i);
 					hud.addLife();
-					Audio.getSound("takeItem").play();
+					if (!mute) {
+						Audio.getSound("takeItem").play();
+					}
 				}
 			}
 		}
 		// adds life/score object randomly.
 		int randomNumber = (int) (Math.random() * 100000 + 1);
-		if (randomNumber == 1000000) {
+		if (randomNumber == 100000) {
 			GoldenScore goldenScore = new GoldenScore();
 			handler.addExtraObject(goldenScore);
-			Audio.getSound("addRandomItem").play();
+			if (!mute) {
+				Audio.getSound("addRandomItem").play();
+			}
 		}
+
 		randomNumber = (int) (Math.random() * 130000 + 1);
 		if (randomNumber == 130000) {
 			AddLife addLife = new AddLife();
 			handler.addExtraObject(addLife);
-			Audio.getSound("addRandomItem").play();
+			if (!mute) {
+				Audio.getSound("addRandomItem").play();
+			}
 		}
 	}
 
