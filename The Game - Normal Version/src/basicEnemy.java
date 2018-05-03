@@ -5,7 +5,8 @@ import java.awt.Rectangle;
 public class basicEnemy extends GameObject {
 
 	public basicEnemy() {
-		super((int) (Math.random() * (Game.WIDTH-64) + 1), (int) (Math.random() * (Game.HEIGHT-64) + 1), ID.basicEnemy, Color.RED);  // creates basic enemy at random X and random Y
+		super((int) (Math.random() * (Game.WIDTH - 64) + 1), (int) (Math.random() * (Game.HEIGHT - 64) + 1),
+				ID.basicEnemy, Color.RED); // creates basic enemy at random X and random Y
 		velX = 5;
 		velY = 5;
 	}
@@ -19,8 +20,9 @@ public class basicEnemy extends GameObject {
 	}
 
 	public void render(Graphics g) { // basic enemy graphics rendering method.
-		g.setColor(Color.red);
-		g.fillRect((int) x, (int) y, 16, 16);
+		// g.setColor(Color.red);
+		// g.fillRect((int) x, (int) y, 16, 16);
+
 	}
 
 	public void BounceEnemy() { // Screen bounds for the object.

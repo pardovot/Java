@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
 import java.awt.Font;
 
 /*
@@ -12,42 +13,47 @@ public class Menu extends MouseAdapter {
 	private Game game;
 	private Handler handler;
 	private Player player;
-	private basicEnemy basicEnemy;
-	private FollowingEnemy followingEnemy;
 	private HUD hud = new HUD();
 
-	public Menu(Game game, Handler handler, Player player, basicEnemy basicEnemy, FollowingEnemy followingEnemy) {
+	public Menu(Game game, Handler handler, Player player) {
 		this.game = game;
 		this.handler = handler;
 		this.player = player;
-		this.basicEnemy = basicEnemy;
-		this.followingEnemy = followingEnemy;
 	}
 
 	public void mousePressed(MouseEvent e) {
 		int mx = e.getX();
 		int my = e.getY();
+		
+		if(mouseHover(mx, my, 744, 9, 30, 31)) { // mute button.
+			Game.mute = !Game.mute;
+		}
 
 		// menu screen.
 		if (game.gameState == STATE.Menu) {
 
 			// click to play.
 			if (mouseHover(mx, my, (Game.WIDTH - 200) / 2, 230, 200, 64)) {
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 				run();
 			}
 
 			// click to go to help screen.
 			if (mouseHover(mx, my, (Game.WIDTH - 200) / 2, 330, 200, 64)) {
 				game.gameState = STATE.Help;
-				Audio.getSound("menu_sound").play();
-				Audio.getSound("gameOver").play();
-
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+					Audio.getSound("gameOver").play();
+				}
 			}
 
 			// click to quit.
 			if (mouseHover(mx, my, (Game.WIDTH - 200) / 2, 430, 200, 64)) {
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 				System.exit(1);
 			}
 		}
@@ -58,7 +64,9 @@ public class Menu extends MouseAdapter {
 			// click to go back to menu.
 			if (mouseHover(mx, my, 11, 17, 190, 24)) {
 				game.gameState = STATE.Menu;
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 			}
 		}
 
@@ -67,19 +75,25 @@ public class Menu extends MouseAdapter {
 
 			// click to play again.
 			if (mouseHover(mx, my, 400 / 2, 230, 400, 64)) {
-				Audio.getSound("menu_sound").play(); // plays menu sound.
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play(); // plays menu sound.
+				}
 				run(); // resets the game values.
 			}
 
 			// click to go to menu.
 			if (mouseHover(mx, my, (Game.WIDTH - 400) / 2, 330, 400, 64)) {
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 				game.gameState = STATE.Menu;
 			}
 
 			// click to quit.
 			if (mouseHover(mx, my, (Game.WIDTH - 400) / 2, 430, 400, 64)) {
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 				System.exit(1);
 			}
 		}
@@ -89,20 +103,42 @@ public class Menu extends MouseAdapter {
 
 			// click to play again.
 			if (mouseHover(mx, my, 400 / 2, 230, 400, 64)) {
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 				run();
 			}
 
 			// click to go to menu.
 			if (mouseHover(mx, my, (Game.WIDTH - 400) / 2, 330, 400, 64)) {
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 				game.gameState = STATE.Menu;
 			}
 
 			// click to quit.
 			if (mouseHover(mx, my, (Game.WIDTH - 400) / 2, 430, 400, 64)) {
-				Audio.getSound("menu_sound").play();
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
 				System.exit(1);
+			}
+		}
+
+		if (game.gameState == STATE.Game) {
+			// click to go to menu.
+			if (mouseHover(mx, my, 680, 17, 51, 15)) {
+				if (!Game.mute) {
+					Audio.getSound("menu_sound").play();
+				}
+				game.gameState = STATE.Menu;
+				handler.object.clear();
+				player.setX(Game.WIDTH / 2 - 32);
+				player.setY(Game.HEIGHT / 2 - 32);
+				player.setVelX(0);
+				player.setVelY(0);
+				game.paused = false;
 			}
 		}
 	}
@@ -111,8 +147,8 @@ public class Menu extends MouseAdapter {
 		game.gameState = STATE.Game;
 		hud.resetGame();
 		handler.addObject(player);
-		handler.addObject(basicEnemy);
-		handler.addObject(followingEnemy);
+		handler.addObject(new basicEnemy());
+		handler.addObject(new FollowingEnemy(player));
 		game.setCurrentTime(System.currentTimeMillis());
 		game.setExpectedTime(game.getCurrentTime() + game.getTime() * 1000);
 	}
@@ -178,15 +214,29 @@ public class Menu extends MouseAdapter {
 			g.drawString("Press space to continue", 175, 350);
 
 		} else if (game.gameState == STATE.Help) { // help screen rendering.
-			Font font = new Font("Big", 1, 50);
 			g.setColor(Color.white);
+			Font font = new Font("small", 1, 30);
 			g.setFont(font);
-			g.drawString("THRERE IS NO FUCKING HELP", 30, 200);
-			g.drawString("YOU FUCKING KNOOBH", 110, 300);
-			g.drawString("¯\\_(ツ)_/¯", 280, 400);
-			Font font2 = new Font("small", 1, 30);
-			g.setFont(font2);
+			g.drawString("Press 'P' to pause, 'M' to mute/unmute, 'Space' to play", 10, 90);
+			font = new Font("Big", 1, 40);
+			g.setFont(font);
+			g.drawString("In this game your target is to avoid the", 40, 150);
+			g.drawString("red and blue enemies:   ,", 145, 200);
+			g.drawString("You do that by simply moving using the:", 20, 300);
+			g.drawString("Left, Right, Up, Down arrow keys", 80, 350);
+			g.drawString("There are also good objects that adds", 40, 450);
+			g.drawString("Life:             and points:   ", 180, 500);
+			font = new Font("small", 1, 30);
+			g.setFont(font);
 			g.drawString("Back to menu", 10, 40);
+			g.setColor(Color.red);
+			g.fillRect(565, 183, 16, 16);
+			g.setColor(Color.blue);
+			g.fillRect(600, 183, 16, 16);
+			g.setColor(Color.yellow);
+			g.fillRect(600, 484, 16, 16);
+			g.setColor(Color.green);
+			g.fillRect(272, 484, 16, 16);
 		} else if (game.gameState == STATE.Winning) { // winning screen rendering.
 
 			Font font = new Font("Big", 1, 70);

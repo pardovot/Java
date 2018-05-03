@@ -1,5 +1,10 @@
 import java.awt.*;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 public class Game extends Canvas implements Runnable {
 
@@ -20,15 +25,30 @@ public class Game extends Canvas implements Runnable {
 	public boolean paused = false;
 	private Menu menu;
 	private KeyInput keyInput;
+	public static boolean mute = false;
+	private BufferedImage musicButton;
+	private BufferedImage muteButton;
+	private boolean playOnce = false;
 
 	// main game constructor.
 	public Game() {
 		Audio.loadSounds();
 		Audio.getMusic("music").loop();
+		try {
+			musicButton = ImageIO.read(new File("resources/musicButton.png")); // load player left sprite.
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			muteButton = ImageIO.read(new File("resources/muteButton.png")); // load player right
+																		// sprite.
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		handler = new Handler();
 		keyInput = new KeyInput(handler, this, player, basicEnemy, followingEnemy);
 		this.addKeyListener(keyInput);
-		menu = new Menu(this, handler, player, basicEnemy, followingEnemy);
+		menu = new Menu(this, handler, player);
 		this.addMouseListener(menu);
 		new Window(WIDTH, HEIGHT, "My Game", this);
 	}
@@ -51,6 +71,13 @@ public class Game extends Canvas implements Runnable {
 		boolean resetPosition = false;
 		boolean playLevelUp = true;
 		while (isRunning) { // main running game loop.
+			if (mute) {
+				Audio.getMusic("music").pause();
+				playOnce = true;
+			} else if (!mute && playOnce) {
+				Audio.getMusic("music").resume();
+				playOnce = false;
+			}
 			if (gameState == STATE.Game && !paused) {
 				deathTest(time);
 				resetPosition = false;
@@ -60,21 +87,24 @@ public class Game extends Canvas implements Runnable {
 				scoreToLevelUp = levelUpTest(scoreToLevelUp, scoreToLevelTemp, resetPosition, isWinning, time,
 						currentTime, expectedTime);
 				isWinning = testWinning(isWinning);
-				objectsLoop();
+				try {
+					objectsLoop();
+				} catch (Exception e) {
+				}
 				playLevelUp = true;
 			}
 			if (paused || gameState != STATE.Game) { // keeps time updated while game is not running
 				currentTime = System.currentTimeMillis();
 				expectedTime = currentTime + (long) (time * 1000);
 			}
-			if (gameState == STATE.GameOver) { // play game over sound.
+			if (gameState == STATE.GameOver && !mute) { // play game over sound.
 				Audio.getSound("gameOver").play();
 			}
-			if (playLevelUp && gameState == STATE.LevelUp) { // play level up sound once.
+			if (playLevelUp && gameState == STATE.LevelUp && !mute) { // play level up sound once.
 				Audio.getSound("levelUp").play();
 				playLevelUp = false;
 			}
-			if (gameState == STATE.Winning) { // game over - winning.
+			if (gameState == STATE.Winning && !mute) { // game over - winning.
 				Audio.getSound("Winning").play();
 				handler.object.clear();
 				handler.removeAllObjects();
@@ -107,7 +137,10 @@ public class Game extends Canvas implements Runnable {
 
 	private void tick() { // main updating method.
 		if (!paused && gameState != STATE.LevelUp) {
-			handler.tick();
+			try {
+				handler.tick();
+			} catch (Exception e) {
+			}
 			if (gameState == STATE.Game) {
 				hud.tick();
 			}
@@ -123,14 +156,22 @@ public class Game extends Canvas implements Runnable {
 		Graphics g = bs.getDrawGraphics();
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, WIDTH, HEIGHT);
+		if (!mute) {
+			g.drawImage(musicButton, 745, 10, null);
+		} else {
+			g.drawImage(muteButton, 745, 10, null);
+		}
 		if (gameState == STATE.Game) {
-			handler.render(g);
+			try {
+				handler.render(g);
+			} catch (Exception e) {
+			}
 			hud.render(g);
 		} else if (gameState == STATE.Menu || gameState == STATE.Help || gameState == STATE.GameOver
 				|| gameState == STATE.LevelUp || gameState == STATE.Winning) {
 			menu.render(g);
 		}
-		if (paused) {
+		if (paused && gameState == STATE.Game) {
 			Font font = new Font("pause", 1, 70);
 			g.setFont(font);
 			g.setColor(Color.WHITE);
@@ -171,13 +212,17 @@ public class Game extends Canvas implements Runnable {
 		if (randomNumber == 20000) {
 			GoldenScore goldenScore = new GoldenScore();
 			handler.addObject(goldenScore);
-			Audio.getSound("addRandomItem").play();
+			if (!mute) {
+				Audio.getSound("addRandomItem").play();
+			}
 		}
 		randomNumber = (int) (Math.random() * 50000 + 1);
 		if (randomNumber == 50000) {
 			AddLife addLife = new AddLife();
 			handler.addObject(addLife);
-			Audio.getSound("addRandomItem").play();
+			if (!mute) {
+				Audio.getSound("addRandomItem").play();
+			}
 		}
 	}
 
@@ -246,7 +291,9 @@ public class Game extends Canvas implements Runnable {
 				if (player.getBounds().intersects(tempObject.getBounds())) {
 					handler.object.remove(i);
 					hud.goldenScore();
-					Audio.getSound("takeItem").play();
+					if (!mute) {
+						Audio.getSound("takeItem").play();
+					}
 				}
 			}
 
@@ -254,7 +301,9 @@ public class Game extends Canvas implements Runnable {
 				if (player.getBounds().intersects(tempObject.getBounds())) {
 					handler.object.remove(i);
 					hud.addLife();
-					Audio.getSound("takeItem").play();
+					if (!mute) {
+						Audio.getSound("takeItem").play();
+					}
 				}
 			}
 		}
