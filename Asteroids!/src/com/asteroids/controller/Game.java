@@ -30,7 +30,7 @@ public class Game extends Canvas implements Runnable {
 		new Window(WIDTH, HEIGHT, "Asteroids!", this);
 		objects = new AllObjects();
 		objects.addObject(player);
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 30; i++) {
 			objects.addObject(new Rock((int) (Math.random() * (Game.WIDTH - 64) + 1),
 					(int) (Math.random() * (Game.HEIGHT - 64) + 1)));
 		}
@@ -47,7 +47,7 @@ public class Game extends Canvas implements Runnable {
 		final double timeU = 1000000000 / ups;
 		final double timeF = 1000000000 / fps;
 		double deltaU = 0, deltaF = 0;
-		 int frames = 0, ticks = 0;
+		int frames = 0, ticks = 0;
 		long timer = System.currentTimeMillis();
 
 		while (isRunning) {
@@ -72,24 +72,24 @@ public class Game extends Canvas implements Runnable {
 			if (deltaU >= 1) {
 				tick();
 				deltaU--;
-	            ticks++;
+				ticks++;
 			}
 
 			if (deltaF >= 1) {
 				render();
 				deltaF--;
-	            frames++;
+				frames++;
 			}
 
 			if (System.currentTimeMillis() - timer > 1000) {
 				this.fps = frames;
-	            System.out.println("UPS: " + ticks + ", FPS: " + frames);
-	            frames = 0;
-	            ticks = 0;
+				System.out.println("UPS: " + ticks + ", FPS: " + frames);
+				frames = 0;
+				ticks = 0;
 				timer += 1000;
 			}
 		}
-		
+
 		stop();
 		System.exit(1);
 
