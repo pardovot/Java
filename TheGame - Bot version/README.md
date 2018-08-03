@@ -1,0 +1,1 @@
+This is the bot version, not an actual playable version. The bot plays for the player and avoids enemies.

@@ -1,0 +1,1 @@
+Simple survival game, clear instructions in-game.
