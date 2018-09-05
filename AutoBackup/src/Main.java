@@ -23,7 +23,7 @@ public class Main {
 	private static Time time;
 	private static Thread times;
 	private final static PopupMenu popup = new PopupMenu();
-	private final static TrayIcon trayIcon = new TrayIcon(createImage("images/puffin.png", "tray icon"));
+	private final static TrayIcon trayIcon = new TrayIcon(createImage("Auto Backup"));
 	private final static SystemTray tray = SystemTray.getSystemTray();
 	private static final String BACKUP = "D:\\EclipseBackup\\backup";
 	private static final String WORKSPACE = "C:\\Users\\OFIR\\Documents\\eclipse-workspace";
@@ -275,7 +275,7 @@ public class Main {
 	}
 
 	// Set tray icon
-	protected static Image createImage(String path, String description) {
+	protected static Image createImage(String description) {
 		URL imageURL = null;
 		try {
 			imageURL = new URL("https://i.imgur.com/eLnExaV.png");
@@ -283,7 +283,6 @@ public class Main {
 			e.printStackTrace();
 		}
 		if (imageURL == null) {
-			System.err.println("Resource not found: " + path);
 			return null;
 		} else {
 			return (new ImageIcon(imageURL, description)).getImage();
