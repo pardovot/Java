@@ -45,6 +45,7 @@ public class Game extends Canvas implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
 		handler = new Handler();
 		keyInput = new KeyInput(handler, this, player, basicEnemy, followingEnemy);
 		this.addKeyListener(keyInput);
